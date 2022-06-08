@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.KeyBinding;
-import net.minecraft.client.util.InputUtil;
 import xyz.wagyourtail.jsmacros.core.library.BaseLibrary;
 import xyz.wagyourtail.jsmacros.core.library.Library;
 
@@ -20,40 +19,41 @@ import java.util.*;
  */
  @Library("KeyBind")
  @SuppressWarnings("unused")
-public class FKeyBind extends BaseLibrary {
+ public class FKeyBind extends BaseLibrary {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
     /**
      * Don't modify
      */
-    public static final Set<String> pressedKeys = new HashSet<>();
-    
-    /**
-     * Dont use this one... get the raw minecraft keycode class.
-     *
-     * @param keyName
-     * @return the raw minecraft keycode class
-     */
-    public InputUtil.KeyCode getKeyCode(String keyName) {
-        try {
-            return InputUtil.fromName(keyName);
-        } catch (Exception e) {
-            return InputUtil.UNKNOWN_KEYCODE;
-        }
-    }
-    
+    public static final Set<Integer> pressedKeys = new HashSet<>();
+
+    //    /**
+    //     * Dont use this one... get the raw minecraft keycode class.
+    //     *
+    //     * @param keyName
+    //     * @return the raw minecraft keycode class
+    //     */
+    //    public int getKeyCode(String keyName) {
+    //        try {
+    //            return InputUtil.fromName(keyName);
+    //        } catch (Exception e) {
+    //            return InputUtil.UNKNOWN_KEYCODE;
+    //        }
+    //        return 0;
+    //    }
+
     /**
      * @since 1.2.2
      *
      * @return A {@link java.util.Map Map} of all the minecraft keybinds.
      */
-    public Map<String, String> getKeyBindings() {
-        Map<String, String> keys = new HashMap<>();
+    public Map<String, Integer> getKeyBindings() {
+        Map<String, Integer> keys = new HashMap<>();
         for (KeyBinding key : ImmutableList.copyOf(mc.options.keysAll)) {
-            keys.put(key.getId(), key.getName());
+            keys.put(key.getTranslationKey(), key.getCode());
         }
         return keys;
     }
-    
+
     /**
      * Sets a minecraft keybind to the specified key.
      *
@@ -62,38 +62,28 @@ public class FKeyBind extends BaseLibrary {
      * @param bind
      * @param key
      */
-    public void setKeyBind(String bind, String key) {
+    public void setKeyBind(String bind, int key) {
         for (KeyBinding keybind : mc.options.keysAll) {
-            if (keybind.getId().equals(bind)) {
-                keybind.setKeyCode(InputUtil.fromName(key));
+            if (keybind.getTranslationKey().equals(bind)) {
+                keybind.setCode(key);
                 return;
             }
         }
     }
-    
+
     /**
      * Set a key-state for a key.
-     *
-     * @param keyName
-     * @param keyState
-     */
-    public void key(String keyName, boolean keyState) {
-        key(getKeyCode(keyName), keyState);
-    }
-    
-    /**
-     * Don't use this one... set the key-state using the raw minecraft keycode class.
      *
      * @param keyBind
      * @param keyState
      */
-    protected void key(InputUtil.KeyCode keyBind, boolean keyState) {
+    public void key(int keyBind, boolean keyState) {
         if (keyState) KeyBinding.onKeyPressed(keyBind);
         KeyBinding.setKeyPressed(keyBind, keyState);
 
         // add to pressed keys list
-        if (keyState) pressedKeys.add(keyBind.getName());
-        else pressedKeys.remove(keyBind.getName());
+        if (keyState) pressedKeys.add(keyBind);
+        else pressedKeys.remove(keyBind);
     }
     
     /**
@@ -108,18 +98,18 @@ public class FKeyBind extends BaseLibrary {
      */
     public void keyBind(String keyBind, boolean keyState) {
         for (KeyBinding key : mc.options.keysAll) {
-            if (key.getName().equals(keyBind)) {
-                if (keyState) KeyBinding.onKeyPressed(InputUtil.fromName(key.getName()));
-                KeyBinding.setKeyPressed(InputUtil.fromName(key.getName()), keyState);
+            if (key.getTranslationKey().equals(keyBind)) {
+                if (keyState) KeyBinding.onKeyPressed(key.getCode());
+                KeyBinding.setKeyPressed(key.getCode(), keyState);
 
                 // add to pressed keys list
-                if (keyState) pressedKeys.add(key.getName());
-                else pressedKeys.remove(key.getName());
+                if (keyState) pressedKeys.add(key.getCode());
+                else pressedKeys.remove(key.getCode());
                 return;
             }
         }
     }
-    
+
     /**
      * Don't use this one... set the key-state using the raw minecraft keybind class.
      *
@@ -127,20 +117,20 @@ public class FKeyBind extends BaseLibrary {
      * @param keyState
      */
     protected void key(KeyBinding keyBind, boolean keyState) {
-        if (keyState) KeyBinding.onKeyPressed(InputUtil.fromName(keyBind.getName()));
-        KeyBinding.setKeyPressed(InputUtil.fromName(keyBind.getName()), keyState);
+        if (keyState) KeyBinding.onKeyPressed(keyBind.getCode());
+        KeyBinding.setKeyPressed(keyBind.getCode(), keyState);
 
         // add to pressed keys list
-        if (keyState) pressedKeys.add(keyBind.getName());
-        else pressedKeys.remove(keyBind.getName());
+        if (keyState) pressedKeys.add(keyBind.getCode());
+        else pressedKeys.remove(keyBind.getCode());
     }
-    
+
     /**
      * @since 1.2.6 (turned into set instead of list in 1.6.5)
      * 
      * @return a set of currently pressed keys.
      */
-    public Set<String> getPressedKeys() {
+    public Set<Integer> getPressedKeys() {
         synchronized (pressedKeys) {
             return ImmutableSet.copyOf(pressedKeys);
         }
